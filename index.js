@@ -16,8 +16,8 @@ const is_live = false; //true for live, false for sandbox
 app.use(cors());
 app.use(express.json());
 
-// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.twtll.mongodb.net/?retryWrites=true&w=majority`;
-const uri = "mongodb://localhost:27017";
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.ts14m7y.mongodb.net/?retryWrites=true&w=majority`;
+
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
@@ -76,6 +76,7 @@ async function run() {
 
         app.get("/services/:id", async (req, res) => {
             const id = req.params.id;
+            console.log(id)
             const query = { _id: ObjectId(id) };
             const service = await serviceCollection.findOne(query);
             res.send(service);
@@ -104,21 +105,21 @@ async function run() {
         app.post("/orders", verifyJWT, async (req, res) => {
             const order = req.body;
             const {service, email, address} = order;
-
+            
             if(!service || !email || !address){
                 return res.send('Please provide all information')
             }
 
             const orderService = await serviceCollection.findOne({ _id: ObjectId(order.service) })
 
-            const transactionId = new ObjectId().toString().toLocaleUpperCase;
+            const transactionId = new ObjectId().toString().toLocaleUpperCase();
             const data = {
                 total_amount: orderService.price,
                 currency: order.currency,
                 tran_id: transactionId, // use unique tran_id for each api call
-                success_url: `${process.env.SERVER_URL}/payment/success?transactionId=${transactionId}`,
-                fail_url: `${process.env.SERVER_URL}/payment/fail?transactionId=${transactionId}`,
-                cancel_url: `${process.env.SERVER_URL}/payment/cancel`,
+                success_url: `https://sllcommerz.vercel.app/payment/success?transactionId=${transactionId}`,
+                fail_url: `https://sllcommerz.vercel.app/payment/fail?transactionId=${transactionId}`,
+                cancel_url: `https://sllcommerz.vercel.app/payment/cancel`,
                 ipn_url: 'http://localhost:3030/ipn',
                 shipping_method: 'Courier',
                 product_name: 'Computer.',
@@ -142,6 +143,7 @@ async function run() {
                 ship_postcode: 1000,
                 ship_country: 'Bangladesh',
             };
+
 
             const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live)
             sslcz.init(data).then(apiResponse => {
